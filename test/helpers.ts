@@ -50,6 +50,8 @@ export function git(cwd: string, ...args: string[]): string {
 /** Makes `dir` a git repository with everything committed. */
 export function gitRepo(dir: string): void {
   git(dir, 'init', '-q');
+  // Keep byte-identical files on Windows runners (no CRLF conversion).
+  git(dir, 'config', 'core.autocrlf', 'false');
   git(dir, 'add', '-A');
   git(dir, 'commit', '-q', '-m', 'base');
 }

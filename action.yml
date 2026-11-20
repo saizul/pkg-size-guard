@@ -74,7 +74,7 @@ runs:
         report="$RUNNER_TEMP/pkg-size-guard-report.md"
         args=(--config "$INPUT_CONFIG" --markdown "$report" --title "$INPUT_TITLE")
         if [ -n "$INPUT_BASE_REF" ]; then args+=(--base-ref "$INPUT_BASE_REF"); fi
-        if [ -n "$INPUT_BASE_BUILD" ]; then args+=(--base-build "$INPUT_BASE_BUILD"); fi
+        if [ -n "$INPUT_BASE_REF" ] && [ -n "$INPUT_BASE_BUILD" ]; then args+=(--base-build "$INPUT_BASE_BUILD"); fi
         if [ -n "$INPUT_BASE_SNAPSHOT" ]; then args+=(--base "$INPUT_BASE_SNAPSHOT"); fi
         if [ -n "$INPUT_SAVE_SNAPSHOT" ]; then args+=(--save "$INPUT_SAVE_SNAPSHOT"); fi
         if [ "$INPUT_SUMMARY" = "true" ]; then args+=(--summary); fi
