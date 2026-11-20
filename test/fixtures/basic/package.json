@@ -1,0 +1,9 @@
+{
+  "name": "size-guard-fixture",
+  "version": "1.0.0",
+  "description": "Fixture package for the pkg-size-guard tests",
+  "license": "MIT",
+  "files": [
+    "build"
+  ]
+}

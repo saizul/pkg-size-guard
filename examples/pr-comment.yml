@@ -1,0 +1,53 @@
+# .github/workflows/size.yml
+# Measures the pull request and its base branch, writes the table to the job
+# summary and keeps one up-to-date comment on the pull request.
+name: Size
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the base commit must be available for the worktree
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - id: size
+        uses: saizul/pkg-size-guard@v0.1.0
+        with:
+          base-ref: ${{ github.event.pull_request.base.sha }}
+          base-build: npm ci --ignore-scripts && npm run build
+          fail: "false" # report first; fail the job in the last step
+
+      - name: Comment on the pull request
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.size.outputs.markdown-file }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          # Update the previous report (found by its hidden marker) or post a new one.
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.body | startswith("<!-- pkg-size-guard -->")) | .id' | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@"$REPORT"
+          else
+            gh pr comment "$PR" --body-file "$REPORT"
+          fi
+
+      - if: steps.size.outputs.exceeded == 'true'
+        run: |
+          echo "A size budget was exceeded. See the job summary."
+          exit 1

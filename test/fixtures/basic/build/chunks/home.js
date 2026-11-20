@@ -1,0 +1,12 @@
+export const home0 = () => import('./home-part-0.js').then((m) => m.default);
+export const home1 = () => import('./home-part-1.js').then((m) => m.default);
+export const home2 = () => import('./home-part-2.js').then((m) => m.default);
+export const home3 = () => import('./home-part-3.js').then((m) => m.default);
+export const home4 = () => import('./home-part-4.js').then((m) => m.default);
+export const home5 = () => import('./home-part-5.js').then((m) => m.default);
+export const home6 = () => import('./home-part-6.js').then((m) => m.default);
+export const home7 = () => import('./home-part-7.js').then((m) => m.default);
+export const home8 = () => import('./home-part-8.js').then((m) => m.default);
+export const home9 = () => import('./home-part-9.js').then((m) => m.default);
+export const home10 = () => import('./home-part-10.js').then((m) => m.default);
+export const home11 = () => import('./home-part-11.js').then((m) => m.default);

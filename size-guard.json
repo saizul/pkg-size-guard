@@ -1,0 +1,8 @@
+{
+  "checks": [
+    { "name": "library (ESM)", "path": "dist/esm/**/*.js", "gzip": "15 kB", "brotli": "13 kB" },
+    { "name": "library (CommonJS)", "path": "dist/cjs/**/*.js", "gzip": "16 kB" }
+  ],
+  "package": { "size": "40 kB", "unpackedSize": "220 kB", "entryCount": 120 },
+  "maxIncrease": "10%"
+}

@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+
+  test:
+    name: Node ${{ matrix.node }} on ${{ matrix.os }}
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node: [20, 22]
+        include:
+          - os: windows-latest
+            node: 22
+          - os: macos-latest
+            node: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Run the example against the build
+        run: node examples/api.mjs
+      - name: Smoke-test the CLI
+        shell: bash
+        run: |
+          node dist/esm/cli.js --version
+          node dist/esm/cli.js --cwd test/fixtures/basic
+          node dist/esm/cli.js --cwd test/fixtures/basic --save base.json --json > /dev/null
+          node dist/esm/cli.js --cwd test/fixtures/basic --base base.json
+          if node dist/esm/cli.js --cwd test/fixtures/basic -c size-guard.tight.json; then echo "expected a failure" && exit 1; fi
+      - name: Check the packed package
+        run: npm pack --dry-run
+
+  action:
+    name: GitHub Action
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      # This repository checks its own size, against the base branch on pull requests.
+      - name: Size of this package
+        id: self
+        uses: ./
+        with:
+          title: pkg-size-guard size
+          base-ref: ${{ github.event.pull_request.base.sha || '' }}
+          base-build: npm ci --ignore-scripts --no-audit --no-fund && npm run build
+          save-snapshot: size-snapshot.json
+
+      - name: A budget that is exceeded, without failing the step
+        id: tight
+        uses: ./
+        with:
+          working-directory: test/fixtures/basic
+          config: size-guard.tight.json
+          base-snapshot: ../../../size-snapshot.json
+          title: Expected failure (fixture)
+          fail: 'false'
+
+      - name: Check the outputs
+        shell: bash
+        run: |
+          test "${{ steps.self.outputs.exceeded }}" = false
+          test "${{ steps.tight.outputs.exceeded }}" = true
+          grep -q '<!-- pkg-size-guard -->' "${{ steps.self.outputs.markdown-file }}"
+          grep -q 'over the limit' "${{ steps.tight.outputs.markdown-file }}"
+          test -s size-snapshot.json

@@ -1,0 +1,93 @@
+name: pkg-size-guard
+description: Size budgets for JS/CSS bundles and npm packages, with a Markdown diff against the base branch in the job summary.
+author: Saizul Amin
+branding:
+  icon: package
+  color: green
+
+inputs:
+  config:
+    description: Path of the config file, relative to working-directory.
+    default: size-guard.json
+  working-directory:
+    description: Project directory (where size-guard.json and package.json live).
+    default: .
+  base-ref:
+    description: >-
+      Git ref to compare with, e.g. github.event.pull_request.base.sha. It is
+      checked out in a temporary worktree, so fetch it first (actions/checkout
+      with fetch-depth 0).
+    default: ''
+  base-build:
+    description: Shell command to run in the base worktree before measuring, e.g. "npm ci && npm run build".
+    default: ''
+  base-snapshot:
+    description: Snapshot file (from save-snapshot) to compare with instead of a git ref.
+    default: ''
+  save-snapshot:
+    description: Write the current sizes to this file, e.g. to upload as an artifact.
+    default: ''
+  title:
+    description: Heading of the report.
+    default: Size report
+  summary:
+    description: Write the report to the job summary.
+    default: 'true'
+  fail:
+    description: Fail the step when a budget is exceeded.
+    default: 'true'
+
+outputs:
+  markdown-file:
+    description: Path of the Markdown report, ready to post as a pull request comment.
+    value: ${{ steps.run.outputs.markdown-file }}
+  exceeded:
+    description: '"true" when at least one budget was exceeded.'
+    value: ${{ steps.run.outputs.exceeded }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build pkg-size-guard
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        if [ ! -f dist/esm/cli.js ]; then
+          npm ci --ignore-scripts --no-audit --no-fund --loglevel=error
+          npm run build --silent
+        fi
+
+    - name: Check sizes
+      id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        INPUT_CONFIG: ${{ inputs.config }}
+        INPUT_BASE_REF: ${{ inputs.base-ref }}
+        INPUT_BASE_BUILD: ${{ inputs.base-build }}
+        INPUT_BASE_SNAPSHOT: ${{ inputs.base-snapshot }}
+        INPUT_SAVE_SNAPSHOT: ${{ inputs.save-snapshot }}
+        INPUT_TITLE: ${{ inputs.title }}
+        INPUT_SUMMARY: ${{ inputs.summary }}
+        INPUT_FAIL: ${{ inputs.fail }}
+      run: |
+        report="$RUNNER_TEMP/pkg-size-guard-report.md"
+        args=(--config "$INPUT_CONFIG" --markdown "$report" --title "$INPUT_TITLE")
+        if [ -n "$INPUT_BASE_REF" ]; then args+=(--base-ref "$INPUT_BASE_REF"); fi
+        if [ -n "$INPUT_BASE_BUILD" ]; then args+=(--base-build "$INPUT_BASE_BUILD"); fi
+        if [ -n "$INPUT_BASE_SNAPSHOT" ]; then args+=(--base "$INPUT_BASE_SNAPSHOT"); fi
+        if [ -n "$INPUT_SAVE_SNAPSHOT" ]; then args+=(--save "$INPUT_SAVE_SNAPSHOT"); fi
+        if [ "$INPUT_SUMMARY" = "true" ]; then args+=(--summary); fi
+
+        set +e
+        node "$GITHUB_ACTION_PATH/dist/esm/cli.js" "${args[@]}"
+        code=$?
+        set -e
+
+        echo "markdown-file=$report" >> "$GITHUB_OUTPUT"
+        if [ "$code" -eq 1 ]; then echo "exceeded=true" >> "$GITHUB_OUTPUT"; else echo "exceeded=false" >> "$GITHUB_OUTPUT"; fi
+        if [ "$code" -eq 1 ] && [ "$INPUT_FAIL" != "true" ]; then
+          echo "::warning::A size budget was exceeded (fail: false)."
+          exit 0
+        fi
+        exit "$code"

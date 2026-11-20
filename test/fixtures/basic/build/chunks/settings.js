@@ -1,0 +1,12 @@
+export const settings0 = () => import('./settings-part-0.js').then((m) => m.default);
+export const settings1 = () => import('./settings-part-1.js').then((m) => m.default);
+export const settings2 = () => import('./settings-part-2.js').then((m) => m.default);
+export const settings3 = () => import('./settings-part-3.js').then((m) => m.default);
+export const settings4 = () => import('./settings-part-4.js').then((m) => m.default);
+export const settings5 = () => import('./settings-part-5.js').then((m) => m.default);
+export const settings6 = () => import('./settings-part-6.js').then((m) => m.default);
+export const settings7 = () => import('./settings-part-7.js').then((m) => m.default);
+export const settings8 = () => import('./settings-part-8.js').then((m) => m.default);
+export const settings9 = () => import('./settings-part-9.js').then((m) => m.default);
+export const settings10 = () => import('./settings-part-10.js').then((m) => m.default);
+export const settings11 = () => import('./settings-part-11.js').then((m) => m.default);

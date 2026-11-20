@@ -1,0 +1,9 @@
+{
+  "checks": [
+    { "name": "app", "path": "build/app.js", "gzip": "2 kB", "brotli": "2 kB" },
+    { "name": "chunks", "path": "build/chunks/*.js", "gzip": "1 kB", "perFile": true },
+    { "name": "css", "path": "build/**/*.css", "raw": "10 kB" },
+    { "name": "all js", "path": ["build/**/*.js", "!build/**/*.min.js"], "ignore": ["**/*.map"] }
+  ],
+  "package": { "size": "10 kB", "unpackedSize": "50 kB", "entryCount": 10 }
+}

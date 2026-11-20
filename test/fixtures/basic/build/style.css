@@ -1,0 +1,180 @@
+.card-0 {
+  display: flex;
+  gap: 1px;
+  padding: 2px 4px;
+  color: #000000;
+}
+.card-1 {
+  display: flex;
+  gap: 2px;
+  padding: 3px 5px;
+  color: #01e240;
+}
+.card-2 {
+  display: flex;
+  gap: 3px;
+  padding: 4px 6px;
+  color: #03c480;
+}
+.card-3 {
+  display: flex;
+  gap: 4px;
+  padding: 5px 4px;
+  color: #05a6c0;
+}
+.card-4 {
+  display: flex;
+  gap: 5px;
+  padding: 2px 5px;
+  color: #078900;
+}
+.card-5 {
+  display: flex;
+  gap: 1px;
+  padding: 3px 6px;
+  color: #096b40;
+}
+.card-6 {
+  display: flex;
+  gap: 2px;
+  padding: 4px 4px;
+  color: #0b4d80;
+}
+.card-7 {
+  display: flex;
+  gap: 3px;
+  padding: 5px 5px;
+  color: #0d2fc0;
+}
+.card-8 {
+  display: flex;
+  gap: 4px;
+  padding: 2px 6px;
+  color: #0f1200;
+}
+.card-9 {
+  display: flex;
+  gap: 5px;
+  padding: 3px 4px;
+  color: #10f440;
+}
+.card-10 {
+  display: flex;
+  gap: 1px;
+  padding: 4px 5px;
+  color: #12d680;
+}
+.card-11 {
+  display: flex;
+  gap: 2px;
+  padding: 5px 6px;
+  color: #14b8c0;
+}
+.card-12 {
+  display: flex;
+  gap: 3px;
+  padding: 2px 4px;
+  color: #169b00;
+}
+.card-13 {
+  display: flex;
+  gap: 4px;
+  padding: 3px 5px;
+  color: #187d40;
+}
+.card-14 {
+  display: flex;
+  gap: 5px;
+  padding: 4px 6px;
+  color: #1a5f80;
+}
+.card-15 {
+  display: flex;
+  gap: 1px;
+  padding: 5px 4px;
+  color: #1c41c0;
+}
+.card-16 {
+  display: flex;
+  gap: 2px;
+  padding: 2px 5px;
+  color: #1e2400;
+}
+.card-17 {
+  display: flex;
+  gap: 3px;
+  padding: 3px 6px;
+  color: #200640;
+}
+.card-18 {
+  display: flex;
+  gap: 4px;
+  padding: 4px 4px;
+  color: #21e880;
+}
+.card-19 {
+  display: flex;
+  gap: 5px;
+  padding: 5px 5px;
+  color: #23cac0;
+}
+.card-20 {
+  display: flex;
+  gap: 1px;
+  padding: 2px 6px;
+  color: #25ad00;
+}
+.card-21 {
+  display: flex;
+  gap: 2px;
+  padding: 3px 4px;
+  color: #278f40;
+}
+.card-22 {
+  display: flex;
+  gap: 3px;
+  padding: 4px 5px;
+  color: #297180;
+}
+.card-23 {
+  display: flex;
+  gap: 4px;
+  padding: 5px 6px;
+  color: #2b53c0;
+}
+.card-24 {
+  display: flex;
+  gap: 5px;
+  padding: 2px 4px;
+  color: #2d3600;
+}
+.card-25 {
+  display: flex;
+  gap: 1px;
+  padding: 3px 5px;
+  color: #2f1840;
+}
+.card-26 {
+  display: flex;
+  gap: 2px;
+  padding: 4px 6px;
+  color: #30fa80;
+}
+.card-27 {
+  display: flex;
+  gap: 3px;
+  padding: 5px 4px;
+  color: #32dcc0;
+}
+.card-28 {
+  display: flex;
+  gap: 4px;
+  padding: 2px 5px;
+  color: #34bf00;
+}
+.card-29 {
+  display: flex;
+  gap: 5px;
+  padding: 3px 6px;
+  color: #36a140;
+}

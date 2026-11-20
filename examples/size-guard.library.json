@@ -1,0 +1,13 @@
+{
+  "checks": [
+    { "name": "ESM build", "path": "dist/esm/**/*.js", "gzip": "10 kB" },
+    {
+      "name": "browser bundle",
+      "path": "dist/my-lib.min.js",
+      "raw": "30 kB",
+      "gzip": "9 kB",
+      "brotli": "8 kB"
+    }
+  ],
+  "package": { "size": "50 kB", "unpackedSize": "250 kB", "entryCount": 60 }
+}

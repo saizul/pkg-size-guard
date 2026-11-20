@@ -1,0 +1,37 @@
+# Keep a snapshot from main as an artifact and compare pull requests with it,
+# so the base never has to be rebuilt.
+name: Size snapshot
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci && npm run build
+
+      - name: Download the snapshot from main
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(gh run list --branch main --workflow "Size snapshot" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -n "$run_id" ]; then gh run download "$run_id" --name size-snapshot --dir .size-base || true; fi
+
+      - uses: saizul/pkg-size-guard@v0.1.0
+        with:
+          base-snapshot: ${{ hashFiles('.size-base/size-snapshot.json') != '' && '.size-base/size-snapshot.json' || '' }}
+          save-snapshot: size-snapshot.json
+
+      - if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: size-snapshot
+          path: size-snapshot.json

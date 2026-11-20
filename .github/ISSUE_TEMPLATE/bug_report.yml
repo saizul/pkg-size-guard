@@ -1,0 +1,39 @@
+name: Bug report
+description: A wrong size, a wrong diff, or a crash
+labels: [bug]
+body:
+  - type: textarea
+    id: config
+    attributes:
+      label: size-guard.json
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The command or action inputs, and the output you got.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: pkg-size-guard version
+      placeholder: '0.1.0'
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Node, npm and git versions and OS
+      placeholder: 'Node 22.12, npm 10.9, git 2.47, Ubuntu 24.04'
+    validations:
+      required: true

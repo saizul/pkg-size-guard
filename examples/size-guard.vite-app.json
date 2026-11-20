@@ -1,0 +1,14 @@
+{
+  "checks": [
+    { "name": "entry", "path": "dist/assets/index-*.js", "gzip": "80 kB", "brotli": "70 kB" },
+    {
+      "name": "lazy chunks",
+      "path": ["dist/assets/*.js", "!dist/assets/index-*.js"],
+      "gzip": "30 kB",
+      "perFile": true
+    },
+    { "name": "styles", "path": "dist/assets/*.css", "gzip": "15 kB" },
+    { "name": "everything", "path": "dist/**/*.{js,css,html}", "maxIncrease": "5%" }
+  ],
+  "maxIncrease": "10%"
+}
