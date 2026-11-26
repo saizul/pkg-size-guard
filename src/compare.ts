@@ -1,7 +1,11 @@
 import { formatSize } from './size.js';
 import type { CheckConfig, Comparison, Config, Increase, Metric, Report, Row } from './types.js';
 
-function evaluate(row: Omit<Row, 'status' | 'problems'>, increase: Increase | null): Row {
+function evaluate(
+  row: Omit<Row, 'status' | 'problems' | 'warnings'>,
+  increase: Increase | null,
+  warnAt: number | null = null,
+): Row {
   const problems: string[] = [];
   if (row.size === null) problems.push('no files matched');
   else {
@@ -17,8 +21,19 @@ function evaluate(row: Omit<Row, 'status' | 'problems'>, increase: Increase | nu
       }
     }
   }
-  const status = problems.length ? 'fail' : row.limit !== null || increase ? 'pass' : 'info';
-  return { ...row, status, problems };
+  const warnings: string[] = [];
+  if (!problems.length && warnAt !== null && row.size !== null && row.limit !== null && row.limit > 0) {
+    const used = (row.size / row.limit) * 100;
+    if (used >= warnAt) warnings.push(`at ${Math.floor(used)}% of the limit`);
+  }
+  const status = problems.length
+    ? 'fail'
+    : warnings.length
+      ? 'warn'
+      : row.limit !== null || increase
+        ? 'pass'
+        : 'info';
+  return { ...row, status, problems, warnings };
 }
 
 const metricsOf = (check: CheckConfig): Metric[] => {
@@ -42,6 +57,7 @@ export function compare(config: Config, current: Report, base: Report | null = n
             evaluate(
               { name: file.path, metric, size: file[metric], base: prev ? prev[metric] : null, limit },
               check.maxIncrease,
+              check.warnAt,
             ),
           );
         }
@@ -58,6 +74,7 @@ export function compare(config: Config, current: Report, base: Report | null = n
               ...(files ? { files } : {}),
             },
             check.maxIncrease,
+            check.warnAt,
           ),
         );
       }
@@ -72,6 +89,7 @@ export function compare(config: Config, current: Report, base: Report | null = n
       evaluate(
         { name, metric: 'tarball', size: now.size, base: prev?.size ?? null, limit: p.size },
         p.maxIncrease,
+        p.warnAt,
       ),
     );
     rows.push(
@@ -84,6 +102,7 @@ export function compare(config: Config, current: Report, base: Report | null = n
           limit: p.unpackedSize,
         },
         p.maxIncrease,
+        p.warnAt,
       ),
     );
     if (p.entryCount !== null) {
@@ -97,9 +116,15 @@ export function compare(config: Config, current: Report, base: Report | null = n
             limit: p.entryCount,
           },
           null,
+          p.warnAt,
         ),
       );
     }
   }
-  return { rows, hasBase: base !== null, failures: rows.filter((r) => r.status === 'fail').length };
+  return {
+    rows,
+    hasBase: base !== null,
+    failures: rows.filter((r) => r.status === 'fail').length,
+    warnings: rows.filter((r) => r.status === 'warn').length,
+  };
 }

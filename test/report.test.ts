@@ -134,6 +134,66 @@ describe('compare', () => {
   });
 });
 
+describe('warnAt', () => {
+  const config = parseConfig({
+    warnAt: '90%',
+    checks: [
+      { name: 'near', path: 'n.js', gzip: '1 kB' },
+      { name: 'far', path: 'f.js', gzip: '1 kB' },
+      { name: 'over', path: 'o.js', gzip: '1 kB' },
+      { name: 'nolimit', path: 'x.js' },
+    ],
+    package: { size: '2 kB', entryCount: 10 },
+  });
+  const current = report(
+    [
+      check('near', [file('n.js', 3000, 950, 900)]),
+      check('far', [file('f.js', 3000, 500, 400)]),
+      check('over', [file('o.js', 3000, 1200, 1100)]),
+      check('nolimit', [file('x.js', 3000, 999, 900)]),
+    ],
+    { name: 'p', version: '1.0.0', size: 1900, unpackedSize: 7000, entryCount: 9 },
+  );
+
+  it('marks rows close to the limit as warn without failing', () => {
+    const c = compare(config, current);
+    assert.deepEqual(
+      c.rows.map((r) => `${r.name}/${r.metric}/${r.status}`),
+      [
+        'near/gzip/warn',
+        'far/gzip/pass',
+        'over/gzip/fail',
+        'nolimit/gzip/info',
+        'npm package/tarball/warn',
+        'npm package/unpacked/info',
+        'npm package/files/warn',
+      ],
+    );
+    assert.equal(c.failures, 1);
+    assert.equal(c.warnings, 3);
+    assert.deepEqual(c.rows[0]!.warnings, ['at 95% of the limit']);
+    assert.deepEqual(c.rows[2]!.warnings, [], 'failed rows do not also warn');
+  });
+
+  it('renders warnings in text and Markdown', () => {
+    const cfg = parseConfig({ checks: [{ name: 'near', path: 'n.js', gzip: '1 kB', warnAt: '90%' }] });
+    const c = compare(cfg, report([check('near', [file('n.js', 3000, 950, 900)])]));
+    const md = renderMarkdown(c);
+    assert.match(md, /All 1 size budget passed; 1 is close to the limit\./);
+    assert.match(md, /\| ⚠️ \| near <sub>gzip<\/sub> \| 950 B \(at 95% of the limit\) \| 1 kB \|/);
+    const text = renderText(c);
+    assert.match(text, /^warn {2}near \(gzip\)/m);
+    assert.match(text, /WARN near \(gzip\): at 95% of the limit/);
+  });
+
+  it('is off by default', () => {
+    const cfg = parseConfig({ checks: [{ name: 'near', path: 'n.js', gzip: '1 kB' }] });
+    const c = compare(cfg, report([check('near', [file('n.js', 3000, 999, 900)])]));
+    assert.equal(c.rows[0]!.status, 'pass');
+    assert.equal(c.warnings, 0);
+  });
+});
+
 describe('renderMarkdown', () => {
   it('renders a table without a base', () => {
     const cfg = parseConfig({ checks: [{ name: 'core', path: 'x', gzip: '5 kB' }] });

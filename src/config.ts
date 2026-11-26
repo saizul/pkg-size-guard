@@ -7,8 +7,26 @@ import { METRICS } from './types.js';
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
-const CHECK_KEYS = new Set(['name', 'path', 'ignore', 'raw', 'gzip', 'brotli', 'perFile', 'maxIncrease']);
-const PACKAGE_KEYS = new Set(['path', 'size', 'unpackedSize', 'entryCount', 'ignoreScripts', 'maxIncrease']);
+const CHECK_KEYS = new Set([
+  'name',
+  'path',
+  'ignore',
+  'raw',
+  'gzip',
+  'brotli',
+  'perFile',
+  'maxIncrease',
+  'warnAt',
+]);
+const PACKAGE_KEYS = new Set([
+  'path',
+  'size',
+  'unpackedSize',
+  'entryCount',
+  'ignoreScripts',
+  'maxIncrease',
+  'warnAt',
+]);
 
 function strings(value: unknown, where: string): string[] {
   const list = typeof value === 'string' ? [value] : value;
@@ -34,6 +52,23 @@ function increase(value: unknown, where: string, fallback: Increase | null): Inc
   return inc;
 }
 
+function warnAt(value: unknown, where: string, fallback: number | null): number | null {
+  if (value === undefined) return fallback;
+  if (value === null) return null;
+  const n =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && /^\s*\d+(\.\d+)?\s*%\s*$/.test(value)
+        ? Number(value.replace('%', ''))
+        : Number.NaN;
+  if (!Number.isFinite(n) || n <= 0 || n > 100) {
+    throw new GuardError(
+      `${where}: cannot read ${JSON.stringify(value)} (use a percentage of the limit, e.g. "90%")`,
+    );
+  }
+  return n;
+}
+
 function unknownKeys(obj: Record<string, unknown>, allowed: Set<string>, where: string) {
   const extra = Object.keys(obj).filter((k) => !allowed.has(k) && k !== '$schema');
   if (extra.length) throw new GuardError(`${where}: unknown option ${extra.map((k) => `"${k}"`).join(', ')}`);
@@ -42,8 +77,9 @@ function unknownKeys(obj: Record<string, unknown>, allowed: Set<string>, where: 
 /** Validates a parsed size-guard.json and fills in defaults. */
 export function parseConfig(input: unknown): Config {
   if (!isObject(input)) throw new GuardError('the config must be a JSON object');
-  unknownKeys(input, new Set(['checks', 'package', 'maxIncrease']), 'config');
+  unknownKeys(input, new Set(['checks', 'package', 'maxIncrease', 'warnAt']), 'config');
   const defaultIncrease = increase(input.maxIncrease, 'maxIncrease', null);
+  const defaultWarnAt = warnAt(input.warnAt, 'warnAt', null);
   const rawChecks = input.checks ?? [];
   if (!Array.isArray(rawChecks)) throw new GuardError('"checks" must be a list');
 
@@ -74,6 +110,7 @@ export function parseConfig(input: unknown): Config {
       limits,
       perFile: c.perFile === true,
       maxIncrease: increase(c.maxIncrease, `${where}.maxIncrease`, defaultIncrease),
+      warnAt: warnAt(c.warnAt, `${where}.warnAt`, defaultWarnAt),
     };
   });
 
@@ -101,6 +138,7 @@ export function parseConfig(input: unknown): Config {
       entryCount: entryCount as number | null,
       ignoreScripts: o.ignoreScripts !== false,
       maxIncrease: increase(o.maxIncrease, 'package.maxIncrease', defaultIncrease),
+      warnAt: warnAt(o.warnAt, 'package.warnAt', defaultWarnAt),
     };
   } else if (p !== undefined && p !== false && p !== null) {
     throw new GuardError('"package" must be true, false or an object');

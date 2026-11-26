@@ -18,6 +18,8 @@ Markdown diff your pull requests can show.
 - **Diff against a base**: a saved JSON snapshot, or any git ref (checked
   out in a temporary worktree and optionally built there).
 - **Fail on growth**, not only on absolute limits: `"maxIncrease": "5%"`.
+- **Early warnings** before a budget breaks: `"warnAt": "90%"` marks rows close to their
+  limit without failing the build.
 - **Markdown table** ready for a PR comment or `$GITHUB_STEP_SUMMARY`, and a
   composite **GitHub Action** that writes it to the job summary.
 - Exit code 1 when a budget is exceeded. One small CLI, zero runtime
@@ -157,6 +159,7 @@ Then add a script:
 | `ignore`      | More globs to exclude, e.g. `["**/*.map"]`. |
 | `perFile`     | `true` to report and limit every matched file on its own instead of the total. |
 | `maxIncrease` | Maximum growth compared with the base: `"5%"` or a size such as `"2 kB"`. Overrides the top-level value; `null` turns it off. |
+| `warnAt`      | Warn when a size reaches this share of its limit: `"90%"` (or `90`). The row shows `warn` / ⚠️ and does not fail. Overrides the top-level value; `null` turns it off. |
 
 The report has one row per limit you set. A check without limits shows its
 gzip size for information. **A check that matches no files fails**, because
@@ -182,14 +185,15 @@ pattern names them. Dotfiles are matched like other files.
 | `entryCount`    |         | Limit for the number of files in the package. |
 | `ignoreScripts` | `true`  | Pass `--ignore-scripts`, so `prepack` and `prepare` do not run. Build first. |
 | `maxIncrease`   |         | As for checks; applies to the tarball and unpacked size. |
+| `warnAt`        |         | As for checks; applies to the tarball, unpacked size and file count. |
 
 The package rows always show the tarball and the unpacked size; the file
 count shows when `entryCount` is set.
 
 ### Top level
 
-`maxIncrease` at the top level is the default for every check and the
-package.
+`maxIncrease` and `warnAt` at the top level are the defaults for every check
+and the package.
 
 ## CLI
 
@@ -309,7 +313,7 @@ if (result.failures) process.exitCode = 1;
 | `measureProject(config, cwd, { pack? })` | Measure everything. `pack` replaces `npm pack` (e.g. for pnpm). |
 | `measureAtRef(config, cwd, ref, { build? })` | Measure a git ref in a temporary worktree. |
 | `loadSnapshot(file)` | Read a snapshot saved with `--save`. |
-| `compare(config, current, base?)` | Rows with sizes, base, limits, statuses and problems. |
+| `compare(config, current, base?)` | Rows with sizes, base, limits, statuses (`pass`, `warn`, `fail`, `info`), problems and warnings. |
 | `renderMarkdown(result, title?)`, `renderText(result)` | Render the table. |
 | `measure(bytes)` | `{ raw, gzip, brotli }` for a buffer. |
 | `packSize(dir)`, `parsePackOutput(stdout)` | `npm pack --dry-run --json`. |

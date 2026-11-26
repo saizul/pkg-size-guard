@@ -20,6 +20,8 @@ export interface CheckConfig {
   perFile: boolean;
   /** Maximum growth compared with the base (`'5%'` or a size). */
   maxIncrease: Increase | null;
+  /** Warn (without failing) once a size reaches this percentage of its limit. */
+  warnAt: number | null;
 }
 
 /** The `package` section of size-guard.json, after validation. */
@@ -35,6 +37,8 @@ export interface PackageConfig {
   /** Run `npm pack` with `--ignore-scripts` (default `true`). */
   ignoreScripts: boolean;
   maxIncrease: Increase | null;
+  /** Warn (without failing) once a size reaches this percentage of its limit. */
+  warnAt: number | null;
 }
 
 export type Increase = { percent: number } | { bytes: number };
@@ -72,7 +76,7 @@ export interface Report {
   package: PackageResult | null;
 }
 
-export type Status = 'pass' | 'fail' | 'info';
+export type Status = 'pass' | 'warn' | 'fail' | 'info';
 
 /** One line of the comparison table. */
 export interface Row {
@@ -86,6 +90,8 @@ export interface Row {
   status: Status;
   /** Why the row failed. */
   problems: string[];
+  /** Why the row is close to its limit (status `warn`). */
+  warnings: string[];
   /** Per-file breakdown for checks with several files. */
   files?: FileResult[];
 }
@@ -96,4 +102,6 @@ export interface Comparison {
   hasBase: boolean;
   /** Number of failed rows. */
   failures: number;
+  /** Number of rows that pass but are close to their limit. */
+  warnings: number;
 }

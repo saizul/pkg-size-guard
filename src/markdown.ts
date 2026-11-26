@@ -4,7 +4,7 @@ import type { Comparison, Row } from './types.js';
 /** Hidden marker at the top of the Markdown, for tools that update one sticky PR comment. */
 export const MARKER = '<!-- pkg-size-guard -->';
 
-const ICON = { pass: '✅', fail: '❌', info: 'ℹ️' } as const;
+const ICON = { pass: '✅', warn: '⚠️', fail: '❌', info: 'ℹ️' } as const;
 
 const fmt = (row: Row, n: number | null) =>
   n === null ? '-' : row.metric === 'files' ? String(n) : formatSize(n);
@@ -23,7 +23,9 @@ function summary(c: Comparison): string {
   if (c.failures)
     return `**${c.failures} of ${c.rows.length} size ${c.rows.length === 1 ? 'check' : 'checks'} failed.**`;
   if (!limited) return `Measured ${c.rows.length} ${c.rows.length === 1 ? 'size' : 'sizes'} (no limits set).`;
-  return `All ${limited} size ${limited === 1 ? 'budget' : 'budgets'} passed.`;
+  const passed = `All ${limited} size ${limited === 1 ? 'budget' : 'budgets'} passed`;
+  if (!c.warnings) return `${passed}.`;
+  return `${passed}; ${c.warnings} ${c.warnings === 1 ? 'is' : 'are'} close to the limit.`;
 }
 
 /** Renders the comparison as a Markdown table for a pull request comment or job summary. */
@@ -41,7 +43,8 @@ export function renderMarkdown(c: Comparison, title = 'Size report'): string {
   for (const row of c.rows) {
     const name = `${cell(row.name)} <sub>${row.metric}</sub>`;
     const status = ICON[row.status];
-    const size = fmt(row, row.size) + (row.problems.length ? ` (${cell(row.problems.join('; '))})` : '');
+    const notes = [...row.problems, ...row.warnings];
+    const size = fmt(row, row.size) + (notes.length ? ` (${cell(notes.join('; '))})` : '');
     const cols = c.hasBase
       ? [status, name, size, fmt(row, row.base), diff(row), fmt(row, row.limit)]
       : [status, name, size, fmt(row, row.limit)];
@@ -67,7 +70,7 @@ export function renderMarkdown(c: Comparison, title = 'Size report'): string {
 /** Renders the comparison as an aligned plain-text table for the terminal. */
 export function renderText(c: Comparison): string {
   const head = c.hasBase ? ['', 'Check', 'Size', 'Base', 'Change', 'Limit'] : ['', 'Check', 'Size', 'Limit'];
-  const word = { pass: 'ok', fail: 'FAIL', info: '' } as const;
+  const word = { pass: 'ok', warn: 'warn', fail: 'FAIL', info: '' } as const;
   const body = c.rows.map((row) => {
     const name = `${row.name} (${row.metric})`;
     return c.hasBase
@@ -84,6 +87,7 @@ export function renderText(c: Comparison): string {
   );
   for (const row of c.rows) {
     for (const p of row.problems) lines.push(`FAIL ${row.name} (${row.metric}): ${p}`);
+    for (const w of row.warnings) lines.push(`WARN ${row.name} (${row.metric}): ${w}`);
   }
   lines.push('', summary(c).replace(/\*\*/g, ''));
   return `${lines.join('\n')}\n`;
