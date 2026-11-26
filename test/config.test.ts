@@ -22,6 +22,7 @@ describe('config', () => {
       limits: { gzip: 2000, brotli: 2000 },
       perFile: false,
       maxIncrease: null,
+      warnAt: null,
     });
     assert.equal(config.checks[1]!.perFile, true);
     assert.deepEqual(config.package, {
@@ -31,7 +32,29 @@ describe('config', () => {
       entryCount: 10,
       ignoreScripts: true,
       maxIncrease: null,
+      warnAt: null,
     });
+  });
+
+  it('reads warnAt as a percentage with a top-level default', () => {
+    const config = parseConfig({
+      warnAt: '90%',
+      checks: [
+        { name: 'a', path: 'a.js', gzip: '1 kB' },
+        { name: 'b', path: 'b.js', gzip: '1 kB', warnAt: 75 },
+        { name: 'c', path: 'c.js', gzip: '1 kB', warnAt: null },
+      ],
+      package: { size: '2 kB', warnAt: '95.5%' },
+    });
+    assert.deepEqual(
+      config.checks.map((c) => c.warnAt),
+      [90, 75, null],
+    );
+    assert.equal(config.package?.warnAt, 95.5);
+    fails({ warnAt: '0%', checks: [{ path: 'x' }] }, /warnAt: cannot read "0%"/);
+    fails({ checks: [{ path: 'x', warnAt: '120%' }] }, /checks\[0\]\.warnAt/);
+    fails({ checks: [{ path: 'x', warnAt: '1 kB' }] }, /percentage of the limit/);
+    fails({ package: { warnAt: true } }, /package\.warnAt/);
   });
 
   it('names a check after its patterns when no name is given', () => {

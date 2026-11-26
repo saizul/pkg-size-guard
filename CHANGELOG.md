@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `warnAt` (top level, per check and in `package`): a percentage of the limit, such as
+  `"90%"`, at which a row gets the new `warn` status. Warnings are shown as `warn` in the
+  terminal (with a `WARN` line), as ⚠️ in Markdown and in the summary, and never change
+  the exit code. `Comparison.warnings` counts them and `Row.warnings` explains them.
+
 ## [0.1.0] - 2026-11-20
 
 ### Added
